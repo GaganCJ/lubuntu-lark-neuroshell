@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=LxQt Memfusion Watchdog
+Comment=Dynamic RAM Expansion Supervisor Loop
+Exec=lxqt-sudo /usr/local/bin/memfusion-watchdog.py
+OnlyShowIn=LXQt;
+X-LXQt-Module=true

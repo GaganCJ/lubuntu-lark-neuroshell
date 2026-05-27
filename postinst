@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+# Validation: Check if local REST API backbone (Ollama) is available
+if ! command -v ollama &> /dev/null; then
+    echo "Ollama inference runtime missing. Triggering official fetch vector..."
+    curl -fsSL https://ollama.com/install.sh | sh
+fi
+
+echo "Spinning up temporary localized background thread mapping for deployment..."
+ollama serve &
+OLLAMA_PID=$!
+
+# Ensure background service establishes listening block bounds
+sleep 5
+
+echo "Provisioning inference footprint via 'gemma3:1b-it-qat' pull command..."
+ollama pull gemma3:1b-it-qat
+
+echo "Terminating temporary Ollama loop thread cleanly..."
+kill $OLLAMA_PID
+wait $OLLAMA_PID 2>/dev/null || true
+
+echo "Lubuntu Lark Neuroshell deployed successfully."
+exit 0

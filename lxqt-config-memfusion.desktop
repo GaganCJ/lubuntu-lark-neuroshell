@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MemFusion RAM Expansion
+Comment=Virtual RAM & Hardware Swap Optimization
+Exec=lxqt-config-memfusion
+Icon=preferences-system-performance
+Categories=Settings;DesktopSettings;Qt;LXQt;
+OnlyShowIn=LXQt;
+X-LXQt-Settings-Module=true

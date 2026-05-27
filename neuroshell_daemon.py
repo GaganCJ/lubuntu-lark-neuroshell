@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+import dbus
+import dbus.service
+import dbus.glib
+from gi.repository import GLib
+import subprocess
+import os
+import re
+import ollama
+
+BANNED_PATTERNS = [r"rm\s+-rf\s+/", r"mkfs", r"dd\s+if=", r"> /dev/sda", r"chmod\s+-R\s+777\s+/"]
+
+def safety_check(cmd_string):
+    for pattern in BANNED_PATTERNS:
+        if re.search(pattern, cmd_string, re.IGNORECASE):
+            return False
+    return True
+
+def extract_tag_content(text, tag_name):
+    pattern = f"<{tag_name}>(.*?)</{tag_name}>"
+    match = re.search(pattern, text, re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+class NeuroShellLocalAutonomousService(dbus.service.Object):
+    def __init__(self):
+        bus_name = dbus.service.BusName('org.lxqt.neuroshell', bus=dbus.SessionBus())
+        dbus.service.Object.__init__(self, bus_name, '/org/lxqt/neuroshell')
+        print("[Lark Engine] Local Autonomous Control Plane Engaged.")
+
+    @dbus.service.method(dbus_interface='org.lxqt.neuroshell.Interface', in_signature='s', out_signature='s')
+    def ProcessIntent(self, raw_user_payload):
+        system_prompt = f"""
+        You are the autonomous execution engine for a Lubuntu Linux desktop environment.
+        User Intent: "{raw_user_payload}"
+        Construct the exact bash commands needed to complete the task.
+        You must respond following this exact block format template:
+
+        <THOUGHT>Explain what you are trying to achieve briefly</THOUGHT>
+        <PRIVILEGED>true or false</PRIVILEGED>
+        <BASH>The exact terminal commands to execute</BASH>
+        <REPLY>A conversational explanation for the user</REPLY>
+        """
+        try:
+            # Explicitly locked down to use Google's high-efficiency Quantization-Aware Trained model
+            response = ollama.generate(model='gemma3:1b-it-qat', prompt=system_prompt, options={"temperature": 0.1})
+            llm_text = response['response'].strip()
+            privileged = extract_tag_content(llm_text, "PRIVILEGED").lower() == "true"
+            bash_cmd = extract_tag_content(llm_text, "BASH")
+            reply = extract_tag_content(llm_text, "REPLY")
+            if bash_cmd:
+                if not safety_check(bash_cmd):
+                    return "<h3>Security Exception</h3>Unverified or dangerous bash sequence blocked."
+                exec_args = ["lxqt-sudo", "--", "bash", "-c", bash_cmd] if privileged else ["bash", "-c", bash_cmd]
+                result = subprocess.run(exec_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+                output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+                return f"{reply}<br><br><b>System Output:</b><pre style='background:#222; color:#0f0; padding:10px;'>{output}</pre>"
+            return reply if reply else "Parsing block format bounds failed."
+        except Exception as e:
+            return f"NeuroShell Local Pipeline Error: {str(e)}"
+
+if __name__ == '__main__':
+    DBusGMainLoop = dbus.glib.DBusGMainLoop(set_as_default=True)
+    service = NeuroShellLocalAutonomousService()
+    GLib.MainLoop().run()

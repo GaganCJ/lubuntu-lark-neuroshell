@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=NeuroShell Configuration
+Comment=Centralized AI Model Provisioning Store
+Exec=lxqt-config-neuroshell
+Icon=preferences-system
+Categories=Settings;DesktopSettings;Qt;LXQt;
+OnlyShowIn=LXQt;
+X-LXQt-Settings-Module=true
