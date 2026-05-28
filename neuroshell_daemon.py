@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import dbus
 import dbus.service
-import dbus.glib
 from gi.repository import GLib
+import dbus.mainloop.glib # Use the modern, non-deprecated mainloop integration
 import subprocess
 import os
 import re
@@ -41,24 +41,28 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
         <REPLY>A conversational explanation for the user</REPLY>
         """
         try:
-            # Explicitly locked down to use Google's high-efficiency Quantization-Aware Trained model
             response = ollama.generate(model='gemma3:1b-it-qat', prompt=system_prompt, options={"temperature": 0.1})
             llm_text = response['response'].strip()
+
             privileged = extract_tag_content(llm_text, "PRIVILEGED").lower() == "true"
             bash_cmd = extract_tag_content(llm_text, "BASH")
             reply = extract_tag_content(llm_text, "REPLY")
+
             if bash_cmd:
                 if not safety_check(bash_cmd):
                     return "<h3>Security Exception</h3>Unverified or dangerous bash sequence blocked."
-                exec_args = ["lxqt-sudo", "--", "bash", "-c", bash_cmd] if privileged else ["bash", "-c", bash_cmd]
-                result = subprocess.run(exec_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+
+                exec_args = ["lxqt-sudo", "bash", "-c", bash_cmd] if privileged else ["bash", "-c", bash_cmd]
+                result = subprocess.run(exec_args, capture_output=True, text=True, timeout=30)
                 output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
-                return f"{reply}<br><br><b>System Output:</b><pre style='background:#222; color:#0f0; padding:10px;'>{output}</pre>"
+
+                return f"{reply}<br><br><b>System Output:</b><pre>{output}</pre>"
             return reply if reply else "Parsing block format bounds failed."
         except Exception as e:
             return f"NeuroShell Local Pipeline Error: {str(e)}"
 
 if __name__ == '__main__':
-    DBusGMainLoop = dbus.glib.DBusGMainLoop(set_as_default=True)
+    # Set up the D-Bus main loop to integrate with GLib's event loop
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     service = NeuroShellLocalAutonomousService()
     GLib.MainLoop().run()

@@ -1,25 +1,74 @@
-#!/bin/bash
+#!/bin/sh
+# postinst script for lubuntu-lark-neuroshell
+
 set -e
 
-# Validation: Check if local REST API backbone (Ollama) is available
-if ! command -v ollama &> /dev/null; then
-    echo "Ollama inference runtime missing. Triggering official fetch vector..."
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to install Ollama
+install_ollama() {
+    echo "Ollama not found. Installing..."
+    # Use curl to download and execute the official installation script
     curl -fsSL https://ollama.com/install.sh | sh
-fi
 
-echo "Spinning up temporary localized background thread mapping for deployment..."
-ollama serve &
-OLLAMA_PID=$!
+    echo "Waiting for Ollama service to initialize..."
+    sleep 10
 
-# Ensure background service establishes listening block bounds
-sleep 5
+    # Verify service is running
+    if ! systemctl is-active --quiet ollama; then
+        echo "Ollama service failed to start. Please check system logs." >&2
+    fi
+}
 
-echo "Provisioning inference footprint via 'gemma3:1b-it-qat' pull command..."
-ollama pull gemma3:1b-it-qat
+# Function to pre-seed the AI model
+seed_model() {
+    MODEL_NAME="gemma3:1b-it-qat"
+    echo "Checking for local AI model: $MODEL_NAME"
 
-echo "Terminating temporary Ollama loop thread cleanly..."
-kill $OLLAMA_PID
-wait $OLLAMA_PID 2>/dev/null || true
+    if ollama list | grep -q "$MODEL_NAME"; then
+        echo "Model '$MODEL_NAME' is already available."
+    else
+        echo "Model not found. Pulling '$MODEL_NAME' from registry..."
+        echo "This may take a few minutes depending on your network speed."
 
-echo "Lubuntu Lark Neuroshell deployed successfully."
+        if ! ollama pull "$MODEL_NAME"; then
+            echo "Failed to pull model '$MODEL_NAME'. Please try manually with 'ollama pull $MODEL_NAME'" >&2
+        else
+            echo "Model '$MODEL_NAME' successfully downloaded."
+        fi
+    fi
+}
+
+case "$1" in
+    configure)
+        echo "Configuring Lubuntu Lark NeuroShell..."
+
+        # Update shared library cache for the new panel plugin
+        echo "Updating shared library cache..."
+        ldconfig
+
+        if command_exists ollama; then
+            echo "Ollama is already installed."
+        else
+            install_ollama
+        fi
+
+        if command_exists ollama; then
+            seed_model
+        else
+            echo "Skipping model download because Ollama is not available." >&2
+        fi
+
+        echo "Lubuntu Lark NeuroShell configuration complete."
+        echo "Please log out and log back in for all changes to take effect."
+    ;;
+
+    *)
+        # No-op for other cases like abort-upgrade, etc.
+    ;;
+esac
+
 exit 0

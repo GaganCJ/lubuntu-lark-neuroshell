@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=NeuroShell Daemon
+Comment=Lubuntu Lark Autonomous Code Execution Core
+Exec=/usr/local/bin/neuroshell_daemon.py
+Type=Application
+Terminal=false
+OnlyShowIn=LXQt;

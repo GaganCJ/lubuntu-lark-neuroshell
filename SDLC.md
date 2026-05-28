@@ -182,7 +182,7 @@ void AIChatWindow::handleAIResponse(const QString &rawResponse) {
 #!/usr/bin/env python3
 import dbus
 import dbus.service
-import dbus.glib
+import dbus.mainloop.glib
 from gi.repository import GLib
 import subprocess
 import os
@@ -244,7 +244,7 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
             return f"NeuroShell Local Pipeline Error: {str(e)}"
 
 if __name__ == '__main__':
-    DBusGMainLoop = dbus.glib.DBusGMainLoop(set_as_default=True)
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     service = NeuroShellLocalAutonomousService()
     GLib.MainLoop().run()
 
@@ -286,16 +286,20 @@ systemctl --user status neuroshell-backend.service | grep -E "(Memory:|CPU:)"
 lubuntu-lark-neuroshell_1.0.0-1_amd64/
 ├── DEBIAN/
 │   ├── control                           # Dependency manifests and package name rules
-│   └── postinst                          # Post-install routine script trigger
+│   ├── preinst                         # Pre-install environment verification script
+│   ├── postinst                          # Post-install routine (Ollama setup, model pull)
+│   └── postrm                          # Post-removal cleanup script (Ollama purge)
 ├── usr/local/bin/
 │   ├── neuroshell_daemon.py              # In-tree copy of executable daemon script
 │   └── memfusion-watchdog.py             # In-tree copy of zRam optimizer script
 ├── etc/xdg/autostart/
-│   └── lxqt-memfusion-daemon.desktop     # Automatically boots your watchdog daemon
+│   ├── lxqt-memfusion-daemon.desktop     # Autostarts the MemFusion watchdog via lxqt-session
+│   └── lxqt-neuroshell-daemon.desktop    # Autostarts the NeuroShell D-Bus daemon
 └── usr/share/applications/
-    └── lxqt-config-neuroshell.desktop    # Integrates the Model Manager into the Control Center
+    ├── lxqt-config-memfusion.desktop   # Integrates MemFusion GUI into the Control Center
+    └── lxqt-config-neuroshell.desktop    # Integrates NeuroShell GUI into the Control Center
 
-``` 
+```
 
 ### 5.2 Build Execution Sequence
 

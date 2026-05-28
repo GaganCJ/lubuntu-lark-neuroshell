@@ -1,7 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=LxQt Memfusion Watchdog
-Comment=Dynamic RAM Expansion Supervisor Loop
+Name=MemFusion Watchdog
+Comment=LXQt zRam Watchdog Module for Lubuntu Lark
 Exec=lxqt-sudo /usr/local/bin/memfusion-watchdog.py
+Terminal=false
 OnlyShowIn=LXQt;
 X-LXQt-Module=true
