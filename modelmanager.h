@@ -5,7 +5,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-class QUltralightView;
+// Forward declare native Qt widgets
+class QTableWidget;
 
 class ModelManager : public QDialog {
     Q_OBJECT
@@ -19,10 +20,8 @@ private slots:
     void handleNetworkReply(QNetworkReply *reply);
 
 private:
-    void initializeUI();
-
     QNetworkAccessManager *m_netManager;
-    QUltralightView *m_webView;
+    QTableWidget *m_table;
 };
 
 #endif // MODELMANAGER_H

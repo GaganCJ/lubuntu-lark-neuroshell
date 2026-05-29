@@ -14,7 +14,7 @@ lubuntu-lark-neuroshell/
 │   ├── lxqt-config-memfusion        # C++ Settings Slider GUI Panel
 │   └── memfusion-watchdog.py        # Supervised zRam Watchdog Module
 └── neuroshell-core/                 # Local Inference Control Layer
-    ├── lxqt-plugin-neuroshell       # Taskbar Chat Panel Widget (QUltralight)
+    ├── lxqt-plugin-neuroshell       # Taskbar Chat Panel Widget (Native Qt)
     ├── lxqt-config-neuroshell       # Local LLM Store & VRAM Monitor GUI
     └── neuroshell_daemon.py         # Autonomous Code Execution Core (D-Bus)
 
@@ -28,7 +28,7 @@ lubuntu-lark-neuroshell/
 
 ### 1.2 `neuroshell-core` (AI Inference & Control Layer)
 
-* **QUltralight View UI Canvas:** Swaps out heavy Chromium multi-process rendering (`QWebEngineView`) for an in-process **`QUltralightView`** (WebKit fork) container. It drops idle UI RAM usage by **75% (down to ~18 MB)** while rendering Markdown tables, Prism.js syntax coloring, and Mermaid.js vector flowcharts.
+* **Native Qt UI:** Uses standard, lightweight Qt6 widgets (`QTextBrowser`, `QTableWidget`) to render the user interface. This provides maximum performance and the lowest possible memory footprint while ensuring a perfectly native look and feel.
 * **Unconstrained ReAct Daemon:** Intercepts system payloads via local **D-Bus IPC** (`org.lxqt.neuroshell`). The backend prompts a local **`gemma3:1b-it-qat`** model to dynamically plan, draft, and execute multi-line Bash sequences securely through an explicit tag-matching runtime engine.
 * **Model Management Hub:** A dedicated settings app querying Ollama's local REST API endpoint (`http://localhost:11434`) to provide a graphical interfaces for downloading models, inspecting real-time VRAM allocations, and purging cache arrays.
 
@@ -48,13 +48,9 @@ lubuntu-lark-neuroshell/
 ### 3.1 Prerequisites
 
 Ensure your Lubuntu host environment has the following development libraries installed:
-
 ```bash
-sudo apt install lxqt-panel-dev qt6-base-dev libqt6widgets6 python3-dbus python3-gi curl cmake build-essential
-
+sudo apt install liblxqt-dev qt6-base-dev libqt6widgets6 python3-dbus python3-gi curl cmake build-essential
 ```
-
-*Note: Ensure the standalone **Ultralight Core C++ SDK** headers are mapped within your compiler lookup paths.*
 
 ### 3.2 Building the Graphical Plugins
 

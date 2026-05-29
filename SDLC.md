@@ -52,7 +52,7 @@ To inject these components as native citizens inside your Lubuntu platform fork,
 
 * **lxqt/lxqt-panel:** Fork to append a new plugin subdirectory named plugin-neuroshell. This contains the visual chat window workspace layout.
 * **lxqt/lxqt-globalkeys:** Fork to register a default global shortcut combination (Meta + A) tied directly to a DBus notification handler that toggles the panel interface view layer.
-* **Visual Container Optimization:** Replace the standard QWebEngineView (Chromium backbone, ~90 MB idle tax) with **QUltralightView** (WebKit fork, ~18 MB idle tax). This in-process runtime native drawing node parses Markdown, highlights syntax strings via Prism.js, and maps structural flowcharts using Mermaid.js text strings on a hardware-accelerated 2D canvas.
+* **Visual Container Optimization:** Uses `QWebView` (from the Qt WebKit module) to render the UI. This provides a lightweight, low-memory footprint rendering surface suitable for resource-constrained systems. It parses Markdown and highlights syntax in code blocks using **Highlight.js**.
 
 ### 2.2 Memory Virtualization Layer Design (lxqt-memfusion)
 
@@ -99,7 +99,7 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     header->addWidget(closeBtn);
     containerLayout->addLayout(header);
 
-    m_webView = new QUltralightView(this);
+    m_webView = new QWebView(this);
     containerLayout->addWidget(m_webView);
     initializeWebCanvas();
 
@@ -117,10 +117,8 @@ void AIChatWindow::initializeWebCanvas() {
 
     QString htmlTemplate = R"(
     <!DOCTYPE html><html><head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.2.4/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:false, theme:'dark'});</script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         body { font-family: sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 8px; font-size: 13px; }
         .message { margin-bottom: 16px; animation: fadeIn 0.2s ease-out; }
@@ -137,13 +135,12 @@ void AIChatWindow::initializeWebCanvas() {
             const cls = user ? 'user-header' : 'ai-header';
             const icon = user ? '👤 User' : '🤖 NeuroShell';
             cv.innerHTML += `<div class="message"><div class="${cls}">${icon}</div><div>${text}</div></div>`;
-            Prism.highlightAll();
-            mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+            hljs.highlightAll();
             window.scrollTo(0, document.body.scrollHeight);
         }
     </script></body></html>)";
 
-    m_webView->loadHTML(htmlTemplate);
+    m_webView->setHtml(htmlTemplate);
 }
 
 void AIChatWindow::sendPrompt() {
@@ -153,7 +150,7 @@ void AIChatWindow::sendPrompt() {
 
     QJsonObject uObj; uObj["t"] = text;
     QString uJs = QString("addMsg(true, %1.t);").arg(QJsonDocument(uObj).toJson(QJsonDocument::Compact));
-    m_webView->evaluateJavaScript(uJs);
+    m_webView->page()->mainFrame()->evaluateJavaScript(uJs);
     m_inputField->clear();
 
     QDBusInterface neuroBus("org.lxqt.neuroshell", "/org/lxqt/neuroshell", "org.lxqt.neuroshell.Interface", QDBusConnection::sessionBus());
@@ -170,7 +167,7 @@ void AIChatWindow::handleAIResponse(const QString &rawResponse) {
 
     QJsonObject aObj; aObj["t"] = rawResponse;
     QString aJs = QString("addMsg(false, %1.t);").arg(QJsonDocument(aObj).toJson(QJsonDocument::Compact));
-    m_webView->evaluateJavaScript(aJs);
+    m_webView->page()->mainFrame()->evaluateJavaScript(aJs);
 }
 
 ```
@@ -236,9 +233,13 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
 
                 exec_args = ["lxqt-sudo", "--", "bash", "-c", bash_cmd] if privileged else ["bash", "-c", bash_cmd]
                 result = subprocess.run(exec_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
-                output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+                output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+                
+                env = Environment(autoescape=select_autoescape(['html']))
+                template_str = "{{ reply_text }}<br><br><b>System Output:</b><pre>{{ shell_output }}</pre>"
+                template = env.from_string(template_str)
+                return template.render(reply_text=reply, shell_output=output)
 
-                return f"{reply}<br><br><b>System Output:</b><pre style='background:#222; color:#0f0; padding:10px;'>{output}</pre>"
             return reply if reply else "Parsing block format bounds failed."
         except Exception as e:
             return f"NeuroShell Local Pipeline Error: {str(e)}"

@@ -6,7 +6,9 @@
 #include <QTimer>
 #include <QUrl>
 #include <QNetworkRequest>
-#include <QUltralightView>
+#include <QHeaderView>
+#include <QTableWidget>
+#include <QLabel>
 
 ModelManager::ModelManager(QWidget *parent) 
     : QDialog(parent), m_netManager(new QNetworkAccessManager(this)) {
@@ -15,11 +17,24 @@ ModelManager::ModelManager(QWidget *parent)
     resize(800, 600);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
-    m_webView = new QUltralightView(this);
-    layout->addWidget(m_webView);
+    layout->setContentsMargins(20, 20, 20, 20);
+    setStyleSheet("background-color: #0d1117; color: #c9d1d9;");
 
-    initializeUI();
+    QLabel* title = new QLabel("Installed Local Models & Hardware Print", this);
+    title->setStyleSheet("color: #58a6ff; font-size: 16px; font-weight: bold;");
+    layout->addWidget(title);
 
+    m_table = new QTableWidget(this);
+    m_table->setColumnCount(3);
+    m_table->setHorizontalHeaderLabels({"Model Tag", "Model Size (GB)", "Family"});
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_table->verticalHeader()->hide();
+    m_table->setShowGrid(false);
+    m_table->setStyleSheet(R"(
+        QTableWidget { border: 1px solid #30363d; gridline-color: #30363d; }
+        QHeaderView::section { background-color: #21262d; border: 1px solid #30363d; padding: 8px; }
+    )");
+    layout->addWidget(m_table);
     // Run periodic check loops targeting Ollama port
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &ModelManager::fetchOllamaStats);
@@ -31,38 +46,6 @@ ModelManager::ModelManager(QWidget *parent)
 
 ModelManager::~ModelManager() {}
 
-void ModelManager::initializeUI() {
-    QString html = R"(
-        <!DOCTYPE html><html><head><style>
-            body { font-family: sans-serif; background-color: #0d1117; color: #c9d1d9; padding: 20px; }
-            h2 { color: #58a6ff; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th, td { border: 1px solid #30363d; padding: 12px; text-align: left; }
-            th { background-color: #21262d; }
-        </style></head><body>
-        <h2>Installed Local Models & Hardware Print</h2><div id="models">Loading inference metrics...</div>
-        <script>
-            function updateModels(data) {
-                const obj = JSON.parse(data);
-                let html = '<table><tr><th>Model Tag</th><th>Model Size (GB)</th><th>Family</th></tr>';
-                if(obj.models) {
-                    obj.models.forEach(m => {
-                        html += `<tr>
-                            <td><strong>${m.name}</strong></td>
-                            <td>${(m.size / 1073741824).toFixed(2)} GB</td>
-                            <td>${m.details.family}</td>
-                        </tr>`;
-                    });
-                }
-                html += '</table>';
-                document.getElementById('models').innerHTML = html;
-            }
-        </script>
-        </body></html>
-    )";
-    m_webView->loadHTML(html);
-}
-
 void ModelManager::fetchOllamaStats() {
     QNetworkRequest request(QUrl("http://localhost:11434/api/tags"));
     m_netManager->get(request);
@@ -70,8 +53,22 @@ void ModelManager::fetchOllamaStats() {
 
 void ModelManager::handleNetworkReply(QNetworkReply *reply) {
     if (reply->error() == QNetworkReply::NoError) {
-        QString js = QString("updateModels('%1');").arg(reply->readAll().replace("'", "\\'").replace("\n", ""));
-        m_webView->evaluateJavaScript(js);
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        QJsonObject root = doc.object();
+        QJsonArray models = root["models"].toArray();
+
+        m_table->setRowCount(models.count());
+        int row = 0;
+        for (const QJsonValue &val : models) {
+            QJsonObject model = val.toObject();
+            QJsonObject details = model["details"].toObject();
+
+            m_table->setItem(row, 0, new QTableWidgetItem(model["name"].toString()));
+            double sizeGb = model["size"].toDouble() / 1073741824.0;
+            m_table->setItem(row, 1, new QTableWidgetItem(QString::number(sizeGb, 'f', 2) + " GB"));
+            m_table->setItem(row, 2, new QTableWidgetItem(details["family"].toString()));
+            row++;
+        }
     }
     reply->deleteLater();
 }

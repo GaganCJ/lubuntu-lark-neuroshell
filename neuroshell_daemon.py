@@ -7,6 +7,7 @@ import subprocess
 import os
 import re
 import ollama
+from jinja2 import Environment, select_autoescape
 
 BANNED_PATTERNS = [r"rm\s+-rf\s+/", r"mkfs", r"dd\s+if=", r"> /dev/sda", r"chmod\s+-R\s+777\s+/"]
 
@@ -54,9 +55,15 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
 
                 exec_args = ["lxqt-sudo", "bash", "-c", bash_cmd] if privileged else ["bash", "-c", bash_cmd]
                 result = subprocess.run(exec_args, capture_output=True, text=True, timeout=30)
+                
                 output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+                
+                # Use Jinja2 for safe HTML rendering
+                env = Environment(autoescape=select_autoescape(['html']))
+                template_str = "{{ reply_text }}<br><br><b>System Output:</b><pre>{{ shell_output }}</pre>"
+                template = env.from_string(template_str)
+                return template.render(reply_text=reply, shell_output=output)
 
-                return f"{reply}<br><br><b>System Output:</b><pre>{output}</pre>"
             return reply if reply else "Parsing block format bounds failed."
         except Exception as e:
             return f"NeuroShell Local Pipeline Error: {str(e)}"

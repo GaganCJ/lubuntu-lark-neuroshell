@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-class QUltralightView;
+// Forward declare native Qt widgets
+class QFormLayout;
 
 class MemFusionConfig : public QDialog {
     Q_OBJECT
@@ -16,10 +17,9 @@ private slots:
     void updateStats();
 
 private:
-    void initializeUI();
     QString readSystemFile(const QString &path);
 
-    QUltralightView *m_webView;
+    QFormLayout *m_formLayout;
 };
 
 #endif // MEMFUSIONCONFIG_H

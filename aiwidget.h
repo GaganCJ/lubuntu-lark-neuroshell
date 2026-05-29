@@ -6,8 +6,8 @@
 #include <QDBusInterface>
 #include <QDBusReply>
 
-// Forward declare QUltralightView
-class QUltralightView;
+// Forward declare native Qt widgets
+class QTextBrowser;
 
 class AIChatWindow : public QDialog {
     Q_OBJECT
@@ -19,10 +19,9 @@ private slots:
     void sendPrompt();
 
 private:
-    void initializeWebCanvas();
     void handleAIResponse(const QString &rawResponse);
 
-    QUltralightView *m_webView;
+    QTextBrowser *m_textBrowser;
     QLineEdit *m_inputField;
 };
 

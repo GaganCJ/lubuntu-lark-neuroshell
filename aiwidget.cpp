@@ -6,8 +6,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-// Assuming Ultralight SDK include path
-#include <QUltralightView>
+// Use native Qt widgets for the UI
+#include <QTextBrowser>
 
 AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
@@ -35,9 +35,24 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     header->addWidget(closeBtn);
     containerLayout->addLayout(header);
 
-    m_webView = new QUltralightView(this);
-    containerLayout->addWidget(m_webView);
-    initializeWebCanvas();
+    m_textBrowser = new QTextBrowser(this);
+    m_textBrowser->setOpenExternalLinks(true);
+    m_textBrowser->setStyleSheet("QTextBrowser { background-color: #0d1117; border: none; }");
+    m_textBrowser->document()->setDefaultStyleSheet(R"(
+        body { font-family: sans-serif; color: #c9d1d9; font-size: 13px; }
+        pre {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; background: #161b22; }
+        th, td { padding: 8px; border: 1px solid #30363d; text-align: left; }
+        th { background-color: #21262d; }
+    )");
+    containerLayout->addWidget(m_textBrowser);
 
     m_inputField = new QLineEdit(this);
     m_inputField->setPlaceholderText("Ask NeuroShell or type '/' for tasks...");
@@ -49,45 +64,16 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     connect(m_inputField, &QLineEdit::returnPressed, this, &AIChatWindow::sendPrompt);
 }
 
-void AIChatWindow::initializeWebCanvas() {
-    QString htmlTemplate = R"(
-    <!DOCTYPE html><html><head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.2.4/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:false, theme:'dark'});</script>
-    <style>
-        body { font-family: sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 8px; font-size: 13px; }
-        .message { margin-bottom: 16px; animation: fadeIn 0.2s ease-out; }
-        .user-header { color: #ff7b72; font-weight: bold; font-size: 11px; }
-        .ai-header { color: #58a6ff; font-weight: bold; font-size: 11px; }
-        pre { background-color: #161b22 !important; border: 1px solid #30363d; border-radius: 6px; padding: 10px; overflow-x: auto; }
-        table { border-collapse: collapse; width: 100%; margin: 10px 0; background: #161b22; }
-        th, td { padding: 8px; border: 1px solid #30363d; text-align: left; }
-        th { background-color: #21262d; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
-    </style></head><body><div id="canvas"></div><script>
-        const cv = document.getElementById('canvas');
-        function addMsg(user, text) {
-            const cls = user ? 'user-header' : 'ai-header';
-            const icon = user ? '👤 User' : '🤖 NeuroShell';
-            cv.innerHTML += `<div class="message"><div class="${cls}">${icon}</div><div>${text}</div></div>`;
-            Prism.highlightAll();
-            mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    </script></body></html>)";
-
-    m_webView->loadHTML(htmlTemplate);
-}
-
 void AIChatWindow::sendPrompt() {
     QString text = m_inputField->text().trimmed();
     if (text.isEmpty()) return;
 
-    QJsonObject uObj; uObj["t"] = text;
-    QString uJs = QString("addMsg(true, %1.t);").arg(QJsonDocument(uObj).toJson(QJsonDocument::Compact));
-    m_webView->evaluateJavaScript(uJs);
+    QString userHtml = QString(
+        R"(<div style="color: #ff7b72; font-weight: bold; font-size: 11px; margin-top: 8px;">👤 User</div>)"
+        R"(<div style="margin-bottom: 16px;">%1</div>)"
+    ).arg(text.toHtmlEscaped());
+
+    m_textBrowser->append(userHtml);
     m_inputField->clear();
 
     QDBusInterface neuroBus("org.lxqt.neuroshell", "/org/lxqt/neuroshell", "org.lxqt.neuroshell.Interface", QDBusConnection::sessionBus());
@@ -101,7 +87,9 @@ void AIChatWindow::sendPrompt() {
 }
 
 void AIChatWindow::handleAIResponse(const QString &rawResponse) {
-    QJsonObject aObj; aObj["t"] = rawResponse;
-    QString aJs = QString("addMsg(false, %1.t);").arg(QJsonDocument(aObj).toJson(QJsonDocument::Compact));
-    m_webView->evaluateJavaScript(aJs);
+    QString aiHtml = QString(
+        R"(<div style="color: #58a6ff; font-weight: bold; font-size: 11px;">🤖 NeuroShell</div>)"
+        R"(<div style="margin-bottom: 16px;">%1</div>)"
+    ).arg(rawResponse); // rawResponse is expected to be HTML from the daemon
+    m_textBrowser->append(aiHtml);
 }

@@ -1,27 +1,48 @@
-cmake_minimum_required(VERSION 3.16)
-project(LubuntuLarkNeuroshell LANGUAGES CXX)
+# CMakeLists.txt for Lubuntu Lark Ecosystem
 
+cmake_minimum_required(VERSION 3.16)
+project(LubuntuLark LANGUAGES CXX)
+
+# --- Standard Settings ---
+# Use C++17 and enable Qt's automatic tools
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Append -fno-rtti for safe WebKit/Ultralight linking
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets DBus Network)
-find_package(lxqt REQUIRED)
-find_package(Ultralight REQUIRED)
+# --- Find Dependencies ---
 
-# 1. AI Widget Shared Library (ILXQtPanelPlugin component)
-add_library(plugin-neuroshell SHARED aiwidget.cpp aiwidget.h)
-target_link_libraries(plugin-neuroshell PRIVATE Qt6::Widgets Qt6::DBus lxqt Ultralight::Ultralight)
+# 1. Find Qt6
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus Network)
 
-# 2. Config Window Executable
-add_executable(lxqt-config-neuroshell modelmanager.cpp modelmanager.h)
-target_link_libraries(lxqt-config-neuroshell PRIVATE Qt6::Widgets Qt6::Network lxqt Ultralight::Ultralight)
+# 2. Find LXQt Panel development files
+# This provides the LXQt::PanelPlugin target for linking panel plugins
+find_package(lxqt-panel REQUIRED)
 
-# 3. MemFusion Config Window Executable
-add_executable(lxqt-config-memfusion memfusionconfig.cpp memfusionconfig.h)
-target_link_libraries(lxqt-config-memfusion PRIVATE Qt6::Widgets lxqt Ultralight::Ultralight)
 
-install(TARGETS lxqt-config-neuroshell DESTINATION bin)
-install(TARGETS lxqt-config-memfusion DESTINATION bin)
+# --- Define Project Targets ---
+
+# 1. NeuroShell Panel Plugin
+add_library(neuroshell SHARED aiwidget.cpp)
+target_link_libraries(neuroshell PRIVATE LXQt::PanelPlugin Qt6::DBus Qt6::Widgets)
+set_target_properties(neuroshell PROPERTIES OUTPUT_NAME "neuroshell")
+
+# 2. NeuroShell Config App
+add_executable(lxqt-config-neuroshell modelmanager.cpp)
+target_link_libraries(lxqt-config-neuroshell PRIVATE Qt6::Widgets Qt6::Network)
+
+# 3. MemFusion Config App
+add_executable(lxqt-config-memfusion memfusionconfig.cpp)
+target_link_libraries(lxqt-config-memfusion PRIVATE Qt6::Widgets)
+
+
+# --- Installation Rules ---
+include(GNUInstallDirs)
+
+install(TARGETS neuroshell LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/lxqt-panel)
+install(TARGETS lxqt-config-neuroshell lxqt-config-memfusion RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+message(STATUS "Configuration complete. Run 'make' and 'sudo make install'.")
