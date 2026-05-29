@@ -11,12 +11,12 @@ The workspace is organized into two core decoupled frameworks interacting via sy
 ```text
 lubuntu-lark-neuroshell/
 ├── lxqt-memfusion/                  # Hardware Optimization Layer
-│   ├── lxqt-config-memfusion        # C++ Settings Slider GUI Panel
-│   └── memfusion-watchdog.py        # Supervised zRam Watchdog Module
+│   ├── lxqt-config-memfusion/       # C++: MemFusion Settings GUI
+│   └── memfusion-watchdog.py        # Python: zRam Watchdog Daemon
 └── neuroshell-core/                 # Local Inference Control Layer
-    ├── lxqt-plugin-neuroshell       # Taskbar Chat Panel Widget (Native Qt)
-    ├── lxqt-config-neuroshell       # Local LLM Store & VRAM Monitor GUI
-    └── neuroshell_daemon.py         # Autonomous Code Execution Core (D-Bus)
+    ├── lxqt-plugin-neuroshell/      # C++: NeuroShell Panel Plugin
+    ├── lxqt-config-neuroshell/      # C++: NeuroShell Config GUI
+    └── neuroshell_daemon.py         # Python: NeuroShell Execution Daemon
 
 ```
 
@@ -88,8 +88,6 @@ Deploy the package on any Lubuntu host client machine:
 sudo apt install ./lubuntu-lark-neuroshell_1.0.0-1_amd64.deb
 
 ```
-
-The automated `postinst` script will run a verification check, install the background Ollama architecture if missing, and pre-seed the high-performance **`gemma3:1b-it-qat`** model straight into the system cache so that the operating system runs 100% offline immediately upon completion.
 
 ---
 

@@ -41,26 +41,26 @@
   +───────────────────────────────────────────────────────────────────────────+
 
 
-
 ```
 
-## 2. Component Design & Code Repositories Mapping
+## 2. Component Design & Integration Strategy
 
-To inject these components as native citizens inside your Lubuntu platform fork, you must fork and implement modifications across the following upstream **LXQt Git repositories**:
+The ecosystem integrates with the host Lubuntu system as a set of standard, modular components. This strategy avoids forking upstream projects, ensuring maximum compatibility and simplifying long-term maintenance.
 
 ### 2.1 Interface & Automation Layer Design (neuroshell-core)
 
-* **lxqt/lxqt-panel:** Fork to append a new plugin subdirectory named plugin-neuroshell. This contains the visual chat window workspace layout.
-* **lxqt/lxqt-globalkeys:** Fork to register a default global shortcut combination (Meta + A) tied directly to a DBus notification handler that toggles the panel interface view layer.
-* **Visual Container Optimization:** Uses `QWebView` (from the Qt WebKit module) to render the UI. This provides a lightweight, low-memory footprint rendering surface suitable for resource-constrained systems. It parses Markdown and highlights syntax in code blocks using **Highlight.js**.
+* **`lxqt-plugin-neuroshell`:** A standalone panel plugin that is compiled and installed into the native LXQt plugin directory. It provides the visual chat window workspace.
+* **Global Shortcut:** The `(Meta + A)` shortcut is configured post-installation to trigger a `dbus-send` command, toggling the visibility of the NeuroShell panel plugin. This avoids modifying `lxqt-globalkeys`.
+* **Visual Container Optimization:** Uses standard, lightweight Qt6 widgets (`QTextBrowser`) to render the UI. This provides maximum performance and the lowest possible memory footprint while ensuring a perfectly native look and feel.
 
 ### 2.2 Memory Virtualization Layer Design (lxqt-memfusion)
 
-* **lxqt/lxqt-config:** Fork to register a new system modular application sub-panel widget panel layout called lxqt-config-memfusion.
-* **lxqt/lxqt-session:** Fork to list your Python supervisor background monitor script as an active system watchdog thread.
+* **`lxqt-config-memfusion`:** A standalone configuration module. Its `.desktop` file is installed to the system's application directory, allowing it to appear natively within the LXQt Control Center without forking `lxqt-config`.
+* **`memfusion-watchdog.py`:** This daemon is managed by `lxqt-session` via a standard XDG autostart entry (`.desktop` file in `/etc/xdg/autostart/`). This allows the session manager to supervise the process without requiring a fork of `lxqt-session`.
+
+---
 
 ## 3. Integration Verification & Testing Framework
-
 ### 3.1 Local Inference Sanity Benchmarking
 
 To verify your pipeline, bypass the UI and query your D-Bus structure directly via terminal loops:
@@ -92,13 +92,19 @@ systemctl --user status neuroshell-backend.service | grep -E "(Memory:|CPU:)"
 lubuntu-lark-neuroshell_1.0.0-1_amd64/
 ├── DEBIAN/
 │   ├── control                           # Dependency manifests and package name rules
-│   ├── preinst                         # Pre-install environment verification script
+│   └── preinst                         # Pre-install environment verification script
 ├── usr/local/bin/
 │   ├── neuroshell_daemon.py              # In-tree copy of executable daemon script
 │   └── memfusion-watchdog.py             # In-tree copy of zRam optimizer script
 ├── etc/xdg/autostart/
 │   ├── lxqt-memfusion-daemon.desktop     # Autostarts the MemFusion watchdog via lxqt-session
 │   └── lxqt-neuroshell-daemon.desktop    # Autostarts the NeuroShell D-Bus daemon
+├── usr/lib/x86_64-linux-gnu/
+│   ├── lxqt/plugins/panel/
+│   │   └── libneuroshell.so              # C++ NeuroShell Panel Plugin
+│   └── lxqt-config-mods/
+│       ├── lxqt-config-memfusion.so    # C++ MemFusion Settings GUI
+│       └── lxqt-config-neuroshell.so   # C++ NeuroShell Config GUI
 └── usr/share/applications/
     ├── lxqt-config-memfusion.desktop   # Integrates MemFusion GUI into the Control Center
     └── lxqt-config-neuroshell.desktop    # Integrates NeuroShell GUI into the Control Center
