@@ -7,7 +7,7 @@ import subprocess
 import os
 import re
 import ollama
-from jinja2 import Environment, select_autoescape
+from jinja2 import Environment, FileSystemLoader, Template
 
 BANNED_PATTERNS = [r"rm\s+-rf\s+/", r"mkfs", r"dd\s+if=", r"> /dev/sda", r"chmod\s+-R\s+777\s+/"]
 
@@ -58,9 +58,9 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
                 
                 output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
                 
-                # Use Jinja2 for safe HTML rendering
-                env = Environment(autoescape=select_autoescape(['html']))
-                template_str = "{{ reply_text }}<br><br><b>System Output:</b><pre>{{ shell_output }}</pre>"
+                # Use Jinja2 template with explicit escaping
+                env = Environment()
+                template_str = "{{ reply_text|e }}<br><br><b>System Output:</b><pre>{{ shell_output|e }}</pre>"
                 template = env.from_string(template_str)
                 return template.render(reply_text=reply, shell_output=output)
 
