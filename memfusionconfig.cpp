@@ -56,12 +56,13 @@ void MemFusionConfig::updateStats() {
         m_formLayout->removeRow(0);
     }
 
-    auto addRow = & {
-        QLabel* valueLabel = new QLabel(value, this);
-        if (!style.isEmpty()) {
-            valueLabel->setStyleSheet(style);
+    // Helper lambda to add a styled row to the form
+    auto addRow = [&](const QString& labelText, const QString& valueText, const QString& valueStyle = "") {
+        QLabel* valueLabel = new QLabel(valueText, this);
+        if (!valueStyle.isEmpty()) {
+            valueLabel->setStyleSheet(valueStyle);
         }
-        m_formLayout->addRow(label, valueLabel);
+        m_formLayout->addRow(new QLabel(labelText, this), valueLabel);
     };
 
     QString status = sizeMb > 0 ? "Active (Tracking)" : "Offline";

@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=NeuroShell Configuration
-Comment=Manage Local LLM Store & VRAM for Lubuntu Lark
-Icon=preferences-system
-Exec=lxqt-config-neuroshell
 Type=Application
-Categories=Settings;DesktopSettings;Qt;LXQt;
+Name=NeuroShell Settings
+Comment=Manage local AI models and the inference engine.
+Exec=lxqt-config-neuroshell
+Icon=preferences-system-performance
+Categories=Settings;
 X-LXQt-Settings-Module=true

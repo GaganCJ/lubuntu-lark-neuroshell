@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=NeuroShell Daemon
-Comment=Lubuntu Lark Autonomous Code Execution Core
-Exec=/usr/local/bin/neuroshell_daemon.py
 Type=Application
-Terminal=false
+Name=NeuroShell Daemon
+Comment=Provides the local AI control plane for Lubuntu Lark.
+Exec=/usr/local/bin/neuroshell_daemon.py
 OnlyShowIn=LXQt;
+X-LXQt-Module=true
