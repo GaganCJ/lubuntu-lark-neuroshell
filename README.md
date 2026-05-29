@@ -49,7 +49,7 @@ lubuntu-lark-neuroshell/
 
 Ensure your Lubuntu host environment has the following development libraries installed:
 ```bash
-sudo apt install liblxqt-dev qt6-base-dev libqt6widgets6 python3-dbus python3-gi curl cmake build-essential
+sudo apt install liblxqt2-dev qt6-base-dev libqt6widgets6 python3-dbus python3-gi python3-ollama python3-jinja2 curl cmake build-essential
 ```
 
 ### 3.2 Building the Graphical Plugins
@@ -71,9 +71,9 @@ This compiles and installs the shared objects (`.so` modules) directly into the 
 To package the entire ecosystem into a single deployable artifact for distribution, compile using the native Debian package tools:
 
 ```bash
-# Set secure execution privileges across staging scripts and daemons
-chmod 755 lubuntu-lark-neuroshell_1.0.0-1_amd64/DEBIAN/postinst
-chmod +x lubuntu-lark-neuroshell_1.0.0-1_amd64/usr/local/bin/*.py
+# Set correct execution privileges on scripts and daemons
+chmod 755 lubuntu-lark-neuroshell_1.0.0-1_amd64/DEBIAN/*inst
+chmod 755 lubuntu-lark-neuroshell_1.0.0-1_amd64/usr/local/bin/*.py
 
 # Build the final installable archive
 dpkg-deb --build lubuntu-lark-neuroshell_1.0.0-1_amd64
