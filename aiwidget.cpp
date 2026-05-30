@@ -5,8 +5,6 @@
 #include <QLabel>
 #include <QJsonDocument>
 #include <QJsonObject>
-
-// Use native Qt widgets for the UI
 #include <QTextBrowser>
 
 AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
@@ -22,6 +20,7 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     container->setStyleSheet("QFrame#CopilotContainer { background-color: #0d1117; border: 1px solid #30363d; border-radius: 12px; }");
     QVBoxLayout *containerLayout = new QVBoxLayout(container);
 
+    // Minimal Copilot-style header
     QHBoxLayout *header = new QHBoxLayout();
     QLabel *modelBadge = new QLabel("✨ gemma3:1b-it-qat", this);
     modelBadge->setStyleSheet("QLabel { color: #58a6ff; background-color: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 2px 10px; font-size: 11px; font-family: monospace; font-weight: bold; }");
@@ -68,28 +67,23 @@ void AIChatWindow::sendPrompt() {
     QString text = m_inputField->text().trimmed();
     if (text.isEmpty()) return;
 
-    QString userHtml = QString(
-        R"(<div style="color: #ff7b72; font-weight: bold; font-size: 11px; margin-top: 8px;">👤 User</div>)"
-        R"(<div style="margin-bottom: 16px;">%1</div>)"
-    ).arg(text.toHtmlEscaped());
-
-    m_textBrowser->append(userHtml);
+    // Append User message instantly using native HTML format structures
+    m_chatBrowser->append("<br><b style='color:#ff7b72;'>👤 User:</b><br>" + text.toHtmlEscaped() + "<br>");
     m_inputField->clear();
 
     QDBusInterface neuroBus("org.lxqt.neuroshell", "/org/lxqt/neuroshell", "org.lxqt.neuroshell.Interface", QDBusConnection::sessionBus());
     if (neuroBus.isValid()) {
         QDBusReply<QString> reply = neuroBus.call("ProcessIntent", text);
-        if (reply.isValid()) { handleAIResponse(reply.value()); }
-        else { handleAIResponse("<span style='color:#f85149;'>D-Bus Payload Sync Failure.</span>"); }
+        if (reply.isValid()) {
+            // Directly append the pre-rendered HTML sent from the Jinja2 Python engine
+            m_chatBrowser->append(reply.value());
+        } else {
+            m_chatBrowser->append("<br><span style='color:#f85149;'>D-Bus Payload Sync Failure.</span>");
+        }
     } else {
-        handleAIResponse("<span style='color:#f85149;'>NeuroShell System Service is completely offline.</span>");
+        m_chatBrowser->append("<br><span style='color:#f85149;'>NeuroShell System Service is offline.</span>");
     }
-}
-
-void AIChatWindow::handleAIResponse(const QString &rawResponse) {
-    QString aiHtml = QString(
-        R"(<div style="color: #58a6ff; font-weight: bold; font-size: 11px;">🤖 NeuroShell</div>)"
-        R"(<div style="margin-bottom: 16px;">%1</div>)"
-    ).arg(rawResponse); // rawResponse is expected to be HTML from the daemon
-    m_textBrowser->append(aiHtml);
+    
+    // Auto-scroll to bottom seamlessly
+    m_chatBrowser->ensureCursorVisible();
 }

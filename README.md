@@ -68,16 +68,14 @@ This compiles and installs the shared objects (`.so` modules) directly into the 
 
 ## 4. Debian Packaging (`.deb` Generation)
 
-To package the entire ecosystem into a single deployable artifact for distribution, compile using the native Debian package tools:
+To package the entire ecosystem into a single deployable artifact for distribution, simply run the automated build script:
 
 ```bash
-# Set correct execution privileges on scripts and daemons
-chmod 755 lubuntu-lark-neuroshell_1.0.0-1_amd64/DEBIAN/*inst
-chmod 755 lubuntu-lark-neuroshell_1.0.0-1_amd64/usr/local/bin/*.py
+# Make the script executable
+chmod +x build_package.sh
 
-# Build the final installable archive
-dpkg-deb --build lubuntu-lark-neuroshell_1.0.0-1_amd64
-
+# Run the build and packaging process
+./build_package.sh
 ```
 
 ### Installation
