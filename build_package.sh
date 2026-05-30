@@ -63,7 +63,7 @@ Package: ${PACKAGE_NAME}
 Version: ${VERSION}
 Architecture: ${ARCH}
 Maintainer: Gagan C J <gaganjchandra2379@gmail.com>
-Depends: curl, python3-dbus, python3-gi, python3-ollama, python3-jinja2, lxqt-panel, lxqt-config, lxqt-session, libqt6widgets6
+Depends: curl, python3-dbus, python3-gi, python3-ollama, python3-openai, python3-jinja2, lxqt-panel, lxqt-config, lxqt-session, libqt6widgets6
 Description: Lubuntu Lark: NeuroShell & MemFusion Ecosystem
  Lubuntu Lark is an optimized, privacy-first, autonomous AI operating system
  flavor built on top of the LXQt (Qt6) Desktop Environment. This ecosystem

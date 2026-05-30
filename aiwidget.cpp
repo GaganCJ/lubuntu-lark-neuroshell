@@ -22,7 +22,17 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
 
     // Minimal Copilot-style header
     QHBoxLayout *header = new QHBoxLayout();
-    QLabel *modelBadge = new QLabel("✨ tinydolphin", this);
+
+    // Dynamically get model name from the daemon
+    QDBusInterface neuroBus("org.lxqt.neuroshell", "/org/lxqt/neuroshell", "org.lxqt.neuroshell.Interface", QDBusConnection::sessionBus());
+    QString modelName = "tinydolphin"; // Default fallback
+    if (neuroBus.isValid()) {
+        QDBusReply<QString> reply = neuroBus.call("GetModelInUse");
+        if (reply.isValid()) {
+            modelName = reply.value();
+        }
+    }
+    QLabel *modelBadge = new QLabel("✨ " + modelName, this);
     modelBadge->setStyleSheet("QLabel { color: #58a6ff; background-color: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 2px 10px; font-size: 11px; font-family: monospace; font-weight: bold; }");
 
     header->addWidget(modelBadge);
@@ -35,6 +45,7 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
     containerLayout->addLayout(header);
 
     m_textBrowser = new QTextBrowser(this);
+    m_textBrowser->setAcceptRichText(true);
     m_textBrowser->setOpenExternalLinks(true);
     m_textBrowser->setStyleSheet("QTextBrowser { background-color: #0d1117; border: none; }");
     m_textBrowser->document()->setDefaultStyleSheet(R"(
@@ -67,8 +78,7 @@ void AIChatWindow::sendPrompt() {
     QString text = m_inputField->text().trimmed();
     if (text.isEmpty()) return;
 
-    // Append User message instantly using native HTML format structures
-    m_chatBrowser->append("<br><b style='color:#ff7b72;'>👤 User:</b><br>" + text.toHtmlEscaped() + "<br>");
+    m_textBrowser->append("<br><b style='color:#ff7b72;'>👤 User:</b><br>" + text.toHtmlEscaped() + "<br>");
     m_inputField->clear();
 
     QDBusInterface neuroBus("org.lxqt.neuroshell", "/org/lxqt/neuroshell", "org.lxqt.neuroshell.Interface", QDBusConnection::sessionBus());
@@ -76,14 +86,19 @@ void AIChatWindow::sendPrompt() {
         QDBusReply<QString> reply = neuroBus.call("ProcessIntent", text);
         if (reply.isValid()) {
             // Directly append the pre-rendered HTML sent from the Jinja2 Python engine
-            m_chatBrowser->append(reply.value());
+            m_textBrowser->append(reply.value());
         } else {
-            m_chatBrowser->append("<br><span style='color:#f85149;'>D-Bus Payload Sync Failure.</span>");
+            m_textBrowser->append("<br><span style='color:#f85149;'>D-Bus Payload Sync Failure.</span>");
         }
     } else {
-        m_chatBrowser->append("<br><span style='color:#f85149;'>NeuroShell System Service is offline.</span>");
+        m_textBrowser->append("<br><span style='color:#f85149;'>NeuroShell System Service is offline.</span>");
     }
     
     // Auto-scroll to bottom seamlessly
-    m_chatBrowser->ensureCursorVisible();
+    m_textBrowser->ensureCursorVisible();
+}
+
+void AIChatWindow::handleAIResponse(const QString &rawResponse) {
+    // This function is no longer used. The daemon sends fully-rendered HTML.
+    m_textBrowser->append(rawResponse);
 }

@@ -2,11 +2,29 @@
 import dbus
 import dbus.service
 from gi.repository import GLib
-import dbus.mainloop.glib # Use the modern, non-deprecated mainloop integration
 import subprocess
 import re
-import ollama
+import os
+import dbus.mainloop.glib # Use the modern, non-deprecated mainloop integration
 from jinja2 import Template
+
+# --- AI Backend Configuration ---
+# Choose your backend: 'local' (Ollama), 'cloud' (OpenAI), or 'azure' (Azure OpenAI)
+AI_BACKEND = os.environ.get("AI_BACKEND", "local")
+
+# --- Model Configuration ---
+# Set these via environment variables or change the defaults here.
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "tinydolphin")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4-turbo-preview")
+# For Azure, the model is the deployment name, configured by AZURE_OPENAI_DEPLOYMENT
+
+# --- Import appropriate AI library ---
+if AI_BACKEND == "cloud":
+    import openai
+elif AI_BACKEND == "azure":
+    from openai import AzureOpenAI
+else:
+    import ollama
 
 BANNED_PATTERNS = [r"rm\s+-rf\s+/", r"mkfs", r"dd\s+if=", r"&gt; /dev/sda", r"chmod\s+-R\s+777\s+/"]
 
@@ -48,7 +66,20 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
         bus_name = dbus.service.BusName('org.lxqt.neuroshell', bus=dbus.SessionBus())
         dbus.service.Object.__init__(self, bus_name, '/org/lxqt/neuroshell')
         self.template = Template(HTML_RESPONSE_TEMPLATE)
-        print("[Lark Engine] Local Autonomous Control Plane Engaged.")
+        print(f"[Lark Engine] Control Plane Engaged. Backend: {AI_BACKEND}, Model: {self._get_model_in_use()}")
+
+    def _get_model_in_use(self):
+        if AI_BACKEND == "cloud":
+            return OPENAI_MODEL
+        elif AI_BACKEND == "azure":
+            return os.environ.get("AZURE_OPENAI_DEPLOYMENT", "azure-deployment")
+        else: # local
+            return OLLAMA_MODEL
+
+    @dbus.service.method(dbus_interface='org.lxqt.neuroshell.Interface', in_signature='', out_signature='s')
+    def GetModelInUse(self):
+        """Returns the name of the AI model currently in use."""
+        return self._get_model_in_use()
 
     @dbus.service.method(dbus_interface='org.lxqt.neuroshell.Interface', in_signature='s', out_signature='s')
     def ProcessIntent(self, raw_user_payload):
@@ -64,8 +95,42 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
         &lt;REPLY&gt;A conversational explanation for the user&lt;/REPLY&gt;
         """
         try:
-            response = ollama.generate(model='tinydolphin', prompt=system_prompt, options={"temperature": 0.1})
-            llm_text = response['response'].strip()
+            llm_text = ""
+            if AI_BACKEND == "cloud":
+                if not os.environ.get("OPENAI_API_KEY"):
+                    raise Exception("OPENAI_API_KEY environment variable not set.")
+
+                client = openai.OpenAI()
+                response = client.chat.completions.create(
+                    model=OPENAI_MODEL,
+                    messages=[
+                        {"role": "system", "content": "You are the autonomous execution engine for a Lubuntu Linux desktop environment. You must follow the user's instructions and respond in the specified XML format."},
+                        {"role": "user", "content": system_prompt}
+                    ],
+                    temperature=0.1,
+                )
+                llm_text = response.choices[0].message.content.strip()
+            elif AI_BACKEND == "azure":
+                if not all(os.environ.get(k) for k in ["AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_KEY", "AZURE_OPENAI_DEPLOYMENT"]):
+                    raise Exception("Azure environment variables (ENDPOINT, KEY, DEPLOYMENT) not set.")
+
+                client = AzureOpenAI(
+                    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+                    api_key=os.environ["AZURE_OPENAI_KEY"],
+                    api_version="2024-02-15-preview"
+                )
+                response = client.chat.completions.create(
+                    model=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+                    messages=[
+                        {"role": "system", "content": "You are the autonomous execution engine for a Lubuntu Linux desktop environment. You must follow the user's instructions and respond in the specified XML format."},
+                        {"role": "user", "content": system_prompt}
+                    ],
+                    temperature=0.1,
+                )
+                llm_text = response.choices[0].message.content.strip()
+            else:  # local backend
+                response = ollama.generate(model=OLLAMA_MODEL, prompt=system_prompt, options={"temperature": 0.1})
+                llm_text = response['response'].strip()
 
             privileged = extract_tag_content(llm_text, "PRIVILEGED").lower() == "true"
             bash_cmd = extract_tag_content(llm_text, "BASH")

@@ -32,6 +32,26 @@ lubuntu-lark-neuroshell/
 * **Unconstrained ReAct Daemon:** Intercepts system payloads via local **D-Bus IPC** (`org.lxqt.neuroshell`). The backend prompts a local **`tinydolphin`** model to dynamically plan, draft, and execute multi-line Bash sequences securely through an explicit tag-matching runtime engine.
 * **Model Management Hub:** A dedicated settings app querying Ollama's local REST API endpoint (`http://localhost:11434`) to provide a graphical interfaces for downloading models, inspecting real-time VRAM allocations, and purging cache arrays.
 
+### 1.3 Configurable AI Backend
+
+The `neuroshell_daemon.py` can be configured to use different AI backends by changing the `AI_BACKEND` variable at the top of the script.
+
+*   **`local` (Default):** Uses a local Ollama model. This is excellent for privacy and offline use but is limited by your local hardware.
+*   **`cloud` (OpenAI):** Uses the official OpenAI API. This provides extremely fast responses from powerful models like GPT-4 but requires an internet connection and a paid API key.
+*   **`azure` (Azure OpenAI):** Uses Microsoft's Azure OpenAI Service. This offers the power of OpenAI's models within the Microsoft cloud ecosystem, providing another high-performance, cloud-based option.
+
+The specific model used by each backend can also be configured via environment variables. This allows you to easily switch models without editing the code.
+
+*   **`AI_BACKEND`**: Sets the backend to use (`local`, `cloud`, or `azure`).
+*   **`OLLAMA_MODEL`**: Sets the model for the `local` backend (Default: `tinydolphin`).
+*   **`OPENAI_MODEL`**: Sets the model for the `cloud` backend (Default: `gpt-4-turbo-preview`).
+*   **`AZURE_OPENAI_DEPLOYMENT`**: Sets the model (deployment name) for the `azure` backend.
+
+**Example:**
+```bash
+export OLLAMA_MODEL="phi-2"
+```
+
 ---
 
 ## 2. Communication Matrix

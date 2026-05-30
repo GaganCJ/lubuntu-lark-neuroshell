@@ -19,8 +19,6 @@ private slots:
     void sendPrompt();
 
 private:
-    void handleAIResponse(const QString &rawResponse);
-
     QTextBrowser *m_textBrowser;
     QLineEdit *m_inputField;
 };
