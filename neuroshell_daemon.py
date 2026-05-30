@@ -64,7 +64,7 @@ class NeuroShellLocalAutonomousService(dbus.service.Object):
         &lt;REPLY&gt;A conversational explanation for the user&lt;/REPLY&gt;
         """
         try:
-            response = ollama.generate(model='gemma3:1b-it-qat', prompt=system_prompt, options={"temperature": 0.1})
+            response = ollama.generate(model='tinydolphin', prompt=system_prompt, options={"temperature": 0.1})
             llm_text = response['response'].strip()
 
             privileged = extract_tag_content(llm_text, "PRIVILEGED").lower() == "true"

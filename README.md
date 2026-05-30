@@ -29,7 +29,7 @@ lubuntu-lark-neuroshell/
 ### 1.2 `neuroshell-core` (AI Inference & Control Layer)
 
 * **Native Qt UI:** Uses standard, lightweight Qt6 widgets (`QTextBrowser`, `QTableWidget`) to render the user interface. This provides maximum performance and the lowest possible memory footprint while ensuring a perfectly native look and feel.
-* **Unconstrained ReAct Daemon:** Intercepts system payloads via local **D-Bus IPC** (`org.lxqt.neuroshell`). The backend prompts a local **`gemma3:1b-it-qat`** model to dynamically plan, draft, and execute multi-line Bash sequences securely through an explicit tag-matching runtime engine.
+* **Unconstrained ReAct Daemon:** Intercepts system payloads via local **D-Bus IPC** (`org.lxqt.neuroshell`). The backend prompts a local **`tinydolphin`** model to dynamically plan, draft, and execute multi-line Bash sequences securely through an explicit tag-matching runtime engine.
 * **Model Management Hub:** A dedicated settings app querying Ollama's local REST API endpoint (`http://localhost:11434`) to provide a graphical interfaces for downloading models, inspecting real-time VRAM allocations, and purging cache arrays.
 
 ---
@@ -78,13 +78,15 @@ chmod +x build_package.sh
 ./build_package.sh
 ```
 
+This script handles compilation, staging, permissions, and final package generation, producing a `.deb` file in the project root (e.g., `lubuntu-lark-neuroshell_1.0.0-5-git123abc_amd64.deb`).
+
 ### Installation
 
 Deploy the package on any Lubuntu host client machine:
 
 ```bash
-sudo apt install ./lubuntu-lark-neuroshell_1.0.0-1_amd64.deb
-
+# The version will vary based on your git history
+sudo apt install ./lubuntu-lark-neuroshell_*.deb
 ```
 
 ---

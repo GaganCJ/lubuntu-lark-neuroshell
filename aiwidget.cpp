@@ -22,7 +22,7 @@ AIChatWindow::AIChatWindow(QWidget *parent) : QDialog(parent) {
 
     // Minimal Copilot-style header
     QHBoxLayout *header = new QHBoxLayout();
-    QLabel *modelBadge = new QLabel("✨ gemma3:1b-it-qat", this);
+    QLabel *modelBadge = new QLabel("✨ tinydolphin", this);
     modelBadge->setStyleSheet("QLabel { color: #58a6ff; background-color: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 2px 10px; font-size: 11px; font-family: monospace; font-weight: bold; }");
 
     header->addWidget(modelBadge);

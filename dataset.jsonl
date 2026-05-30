@@ -1,0 +1,15 @@
+{"instruction": "User Intent: \"check disk space\"", "output": "<THOUGHT>The user wants to see the disk usage. The `df -h` command is perfect for this.</THOUGHT>\n<PRIVILEGED>false</PRIVILEGED>\n<BASH>df -h</BASH>\n<REPLY>Here are the details of your disk usage.</REPLY>"}
+{"instruction": "User Intent: \"update my system\"", "output": "<THOUGHT>The user wants to update their system packages. This requires `apt` and needs root privileges.</THOUGHT>\n<PRIVILEGED>true</PRIVILEGED>\n<BASH>apt update && apt upgrade -y</BASH>\n<REPLY>I am updating your system packages now.</REPLY>"}
+{"instruction": "User Intent: \"find all text files in my home directory and count them\"", "output": "<THOUGHT>The user wants to find all files ending in `.txt` in their home directory and then count them. I can use `find` piped to `wc -l`.</THOUGHT>\n<PRIVILEGED>false</PRIVILEGED>\n<BASH>find ~ -type f -name \"*.txt\" | wc -l</BASH>\n<REPLY>I am counting the text files in your home directory.</REPLY>"}
+{"instruction": "User Intent: \"what is my current ip address\"", "output": "<THOUGHT>The user wants to know their IP address. The `ip addr show` command will display this information.</THOUGHT>\n<PRIVILEGED>false</PRIVILEGED>\n<BASH>ip addr show</BASH>\n<REPLY>Here is your network configuration, including your IP address.</REPLY>"}
+{"instruction": "User Intent: \"create a new directory called 'test' on the desktop\"", "output": "<THOUGHT>The user wants to create a new directory. The `mkdir` command can do this. The path will be `~/Desktop/test`.</THOUGHT>\n<PRIVILEGED>false</PRIVILEGED>\n<BASH>mkdir -p ~/Desktop/test</BASH>\n<REPLY>I've created a new directory named 'test' on your desktop.</REPLY>"}
+{"text": "### Instruction:\nCheck if git is installed on the machine. If it isn't, install it.\n\n### Response:\n```bash\nwhich git || sudo apt-get update && sudo apt-get install -y git\n```\nOBJECTIVE_ACHIEVED"}
+{"text": "### Instruction:\nFind out the local IP address of this machine and output only the IP.\n\n### Response:\n```bash\nhostname -I | awk '{print $1}'\n```\nOBJECTIVE_ACHIEVED"}
+{"text": "### Instruction:\nFind the largest file in /var/log/ ending in .log, compress it to .gz format, and tell me its new size.\n\n### Response:\n```bash\nLARGEST=$(ls -S /var/log/*.log | head -n 1) && gzip -f \"$LARGEST\" && du -sh \"$LARGEST.gz\"\n```\nOBJECTIVE_ACHIEVED"}
+{"text": "### Instruction:\nCheck if port 80 or 8080 is listening on this machine. If the tool ss is missing, install net-tools.\n\n### Response:\n
+http://googleusercontent.com/immersive_entry_chip/0
+http://googleusercontent.com/immersive_entry_chip/1
+http://googleusercontent.com/immersive_entry_chip/2
+http://googleusercontent.com/immersive_entry_chip/3
+http://googleusercontent.com/immersive_entry_chip/4
+http://googleusercontent.com/immersive_entry_chip/5
