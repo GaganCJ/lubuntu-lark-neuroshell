@@ -1,28 +1,26 @@
 #ifndef AIWIDGET_H
 #define AIWIDGET_H
 
+#include <lxqtpanelplugin.h>
 #include <QDialog>
-#include <QLineEdit>
-#include <QDBusInterface>
-#include <QDBusReply>
-
-// Forward declare native Qt widgets
-class QTextBrowser;
+#include <QFrame>
+#include <QPushButton>
+#include <QWebEngineView>
 
 class AIChatWindow : public QDialog {
     Q_OBJECT
-
 public:
-    explicit AIChatWindow(QWidget *parent = nullptr);
+    AIChatWindow(QWidget *parent = nullptr);
 
 private slots:
-    void sendPrompt();
+    void switchAIProvider(const QString &provider);
+    void purgeSessionData();
 
 private:
-    void handleAIResponse(const QString &rawResponse);
-
-    QTextBrowser *m_textBrowser;
-    QLineEdit *m_inputField;
+    QFrame *m_container;
+    QPushButton *m_geminiBtn;
+    QPushButton *m_copilotBtn;
+    QWebEngineView *m_webView;
 };
 
 #endif // AIWIDGET_H

@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=NeuroShell Daemon
-Comment=Provides the local AI control plane for Lubuntu Lark.
-Exec=/usr/local/bin/neuroshell_daemon.py
-OnlyShowIn=LXQt;
-X-LXQt-Module=true
