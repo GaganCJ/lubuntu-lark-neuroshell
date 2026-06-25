@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=NeuroShell Settings
-Comment=Manage local AI models and the inference engine.
-Exec=lxqt-config-neuroshell
-Icon=preferences-system-performance
-Categories=Settings;
-X-LXQt-Settings-Module=true

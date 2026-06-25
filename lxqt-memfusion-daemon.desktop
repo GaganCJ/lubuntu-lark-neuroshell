@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=MemFusion Watchdog
-Comment=Manages zRam and system memory virtualization for Lubuntu Lark.
-Exec=lxqt-sudo /usr/local/bin/memfusion-watchdog.py
-OnlyShowIn=LXQt;
-X-LXQt-Module=true

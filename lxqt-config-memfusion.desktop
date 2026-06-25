@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=MemFusion Settings
-Comment=Configure zRam and memory virtualization settings.
-Exec=lxqt-config-memfusion
-Icon=memory
-Categories=Settings;
-X-LXQt-Settings-Module=true
