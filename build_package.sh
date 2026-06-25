@@ -46,15 +46,7 @@ echo "[4/7] Copying files to staging area..."
 
 # Copy compiled .so files from the build directory
 echo "  - Copying shared object (.so) files..."
-cp build/neuroshell-core/lxqt-plugin-neuroshell/libneuroshell.so "$STAGING_DIR/usr/lib/x86_64-linux-gnu/lxqt/plugins/panel/"
-# Note: The SDLC specifies more .so files. Uncomment the lines below if their sources are added.
-# cp build/lxqt-memfusion/lxqt-config-memfusion/lxqt-config-memfusion.so "$STAGING_DIR/usr/lib/x86_64-linux-gnu/lxqt-config-mods/"
-cp build/neuroshell-core/lxqt-config-neuroshell/lxqt-config-neuroshell.so "$STAGING_DIR/usr/lib/x86_64-linux-gnu/lxqt-config-mods/"
-
-# Copy Python daemons
-echo "  - Copying Python daemon scripts..."
-cp neuroshell_daemon.py "$STAGING_DIR/usr/local/bin/"
-# cp memfusion-watchdog.py "$STAGING_DIR/usr/local/bin/"
+cp build/liblxqt_ai_widget.so "$STAGING_DIR/usr/lib/x86_64-linux-gnu/lxqt/plugins/panel/"
 
 # Copy DEBIAN control files
 echo "  - Generating DEBIAN control file with dynamic version..."
@@ -63,13 +55,12 @@ Package: ${PACKAGE_NAME}
 Version: ${VERSION}
 Architecture: ${ARCH}
 Maintainer: Gagan C J <gaganjchandra2379@gmail.com>
-Depends: curl, python3-dbus, python3-gi, python3-ollama, python3-jinja2, lxqt-panel, lxqt-config, lxqt-session, libqt6widgets6
-Description: Lubuntu Lark: NeuroShell & MemFusion Ecosystem
- Lubuntu Lark is an optimized, privacy-first, autonomous AI operating system
- flavor built on top of the LXQt (Qt6) Desktop Environment. This ecosystem
- decouples low-level virtual memory allocation from an unconstrained, local
- AI control plane, allowing resource-constrained hardware to run advanced OS
- automation completely offline with zero network latency.
+Depends: lxqt-panel, lxqt-config, lxqt-session, libqt6widgets6, qt6-webengine-dev
+Description: Lubuntu Lark: Cloud-Hybrid Dual-Provider AI Applet
+ Lubuntu Lark is an optimized, privacy-first, cloud-hybrid AI taskbar widget
+ built on top of the LXQt (Qt6) Desktop Environment. This applet streams
+ Google Gemini and Microsoft Copilot with dual persistent cookie sessions and
+ low-footprint Chromium optimizations.
 EOF
 
 # Copy other DEBIAN files
@@ -79,7 +70,6 @@ echo "File copying complete."
 # --- 5. Set Permissions ---
 echo "[5/7] Setting executable permissions..."
 chmod 755 "$STAGING_DIR/DEBIAN/preinst"
-chmod 755 "$STAGING_DIR/usr/local/bin/neuroshell_daemon.py"
 echo "Permissions set."
 
 # --- 6. Build the Debian Package ---

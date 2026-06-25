@@ -1,74 +1,56 @@
-# Lubuntu Lark: NeuroShell & MemFusion Ecosystem
+# Lubuntu Lark: Cloud-Hybrid Dual-Provider AI Applet
 
-Lubuntu Lark is an optimized, privacy-first, autonomous AI operating system flavor built on top of the **LXQt (Qt6) Desktop Environment**. This ecosystem decouples low-level virtual memory allocation from an unconstrained, local AI control plane, allowing resource-constrained hardware to run advanced OS automation completely offline with zero network latency.
+Lubuntu Lark is a highly optimized, cloud-hybrid AI taskbar widget built on top of the **LXQt (Qt6) Desktop Environment**. 
+
+This applet replaces heavy local LLM inference setups with a low-footprint, embedded web viewport streaming Google Gemini and Microsoft Copilot. It utilizes native Qt6 components and Chromium optimizations to minimize memory and CPU usage on resource-constrained hardware.
 
 ---
 
-## 1. System Architecture & Components
+## 1. System Features & Optimizations
 
-The workspace is organized into two core decoupled frameworks interacting via system IPC and local REST loops:
+*   **Low-Footprint Chromium Engine:** Pre-configures strict rendering and thread optimizations via `qputenv` command-line flags before initialization:
+    *   `--single-process` (Clamps execution to a single background process thread)
+    *   `--disable-gpu` (Disables heavy 3D acceleration and composition overhead)
+    *   `--mute-audio` (Shuts down hardware audio routing)
+    *   `--disable-extensions` & `--disable-notifications` (Purges background check loops)
+*   **Dual Persistent Sessions:** Redirects cookie, local storage, and cache storage profiles to a custom path: `~/.config/lark/ai_profile`. This keeps both Google and Microsoft user sessions active simultaneously.
+*   **Instant Provider Switching:** Hosts separate `QWebEngineView` instances inside a `QStackedWidget` for Gemini and Copilot. Users can toggle between providers instantly without reloading the page or losing current chat context.
+*   **Aesthetic Integration:** Uses a custom JavaScript injection hook on page loads to inject CSS stylesheets hiding standard web banners and navigation headers, offering a clean, native desktop application appearance matching the dark VS Code GitHub Copilot theme (`#0d1117` background, subtle `#30363d` borders).
 
-```text
-lubuntu-lark-neuroshell/
-├── lxqt-memfusion/                  # Hardware Optimization Layer
-│   ├── lxqt-config-memfusion/       # C++: MemFusion Settings GUI
-│   └── memfusion-watchdog.py        # Python: zRam Watchdog Daemon
-└── neuroshell-core/                 # Local Inference Control Layer
-    ├── lxqt-plugin-neuroshell/      # C++: NeuroShell Panel Plugin
-    ├── lxqt-config-neuroshell/      # C++: NeuroShell Config GUI
-    └── neuroshell_daemon.py         # Python: NeuroShell Execution Daemon
+---
 
+## 2. Compilation & Development
+
+### 2.1 Prerequisites
+
+Ensure your target system has the following build tools and libraries installed:
+```bash
+sudo apt update
+sudo apt install build-essential cmake git qt6-base-dev qt6-webengine-dev liblxqt-dev lxqt-panel-dev
 ```
 
-### 1.1 `lxqt-memfusion` (Hardware Layer)
+### 2.2 Compilation Steps
 
-* **Dynamic zRam Scaling:** Dynamically initializes a compressed swap pool (`/dev/zram0`) utilizing high-density `zstd` compression mapped at maximum kernel priority.
-* **Android-Style Writeback:** Links memory blocks to physical storage backing devices (`/sys/block/zram0/backing_dev`) to flush incompressible pages seamlessly.
-* **Session Supervision:** The daemon runs as a native `X-LXQt-Module`, allowing `lxqt-session` to automatically monitor and restart the loop during extreme Out-Of-Memory (OOM) spikes.
-
-### 1.2 `neuroshell-core` (AI Inference & Control Layer)
-
-* **Native Qt UI:** Uses standard, lightweight Qt6 widgets (`QTextBrowser`, `QTableWidget`) to render the user interface. This provides maximum performance and the lowest possible memory footprint while ensuring a perfectly native look and feel.
-* **Unconstrained ReAct Daemon:** Intercepts system payloads via local **D-Bus IPC** (`org.lxqt.neuroshell`). The backend prompts a local **`tinydolphin`** model to dynamically plan, draft, and execute multi-line Bash sequences securely through an explicit tag-matching runtime engine.
-* **Model Management Hub:** A dedicated settings app querying Ollama's local REST API endpoint (`http://localhost:11434`) to provide a graphical interfaces for downloading models, inspecting real-time VRAM allocations, and purging cache arrays.
-
----
-
-## 2. Communication Matrix
-
-| Interface Track | Protocol | Source Endpoint | Destination Endpoint | Purpose |
-| --- | --- | --- | --- | --- |
-| **Automation Wire** | **D-Bus IPC** | `lxqt-plugin-neuroshell` (C++) | `neuroshell_daemon.py` (Python) | High-speed, local binary prompt and output payload synchronization. |
-| **Model Registry** | **REST API** | `lxqt-config-neuroshell` (C++) | Ollama Daemon (`127.0.0.1:11434`) | Managing disk usage, checking VRAM status, and downloading models via HTTP. |
-
----
-
-## 3. Local Development & Compilation
-
-### 3.1 Prerequisites
-
-Ensure your Lubuntu host environment has the following development libraries installed:
+To compile and install the plugin module directly on your system:
 ```bash
-sudo apt install liblxqt2-dev qt6-base-dev libqt6widgets6 python3-dbus python3-gi python3-ollama python3-jinja2 curl cmake build-essential
-```
-
-### 3.2 Building the Graphical Plugins
-
-```bash
+# 1. Create a build directory
 mkdir build && cd build
+
+# 2. Configure using CMake
 cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# 3. Compile the shared library
 make
+
+# 4. Install the library module
 sudo make install
-
 ```
-
-This compiles and installs the shared objects (`.so` modules) directly into the native LXQt panel plugin and application configuration module folders.
 
 ---
 
-## 4. Debian Packaging (`.deb` Generation)
+## 3. Debian Packaging (`.deb` Generation)
 
-To package the entire ecosystem into a single deployable artifact for distribution, simply run the automated build script:
+To generate a deployable Debian archive (`.deb`) for distribution:
 
 ```bash
 # Make the script executable
@@ -78,22 +60,18 @@ chmod +x build_package.sh
 ./build_package.sh
 ```
 
-This script handles compilation, staging, permissions, and final package generation, producing a `.deb` file in the project root (e.g., `lubuntu-lark-neuroshell_1.0.0-5-git123abc_amd64.deb`).
+This automates compiling and packaging, outputting a package file like `lubuntu-lark-neuroshell_1.0.0-git_amd64.deb` in the project root.
 
 ### Installation
 
-Deploy the package on any Lubuntu host client machine:
+Deploy the package on your target Lubuntu system:
 
 ```bash
-# The version will vary based on your git history
 sudo apt install ./lubuntu-lark-neuroshell_*.deb
 ```
 
----
-
-## 5. System Safety & Privilege Escalation Guardrails
-
-1. **Regex Content Scanning:** The Python daemon passes all code blocks generated by the local LLM through an internal validation pass. Commands containing hazardous pattern expressions (e.g., `rm -rf /` or device sector block erasures) fail instantly with an explicit security exception.
-2. **Privilege Isolation:** Minor environmental variables are checked using low-privilege standard shells. Modifying system packages (`apt`), managing system-wide configuration files, or tweaking operational states causes the model to set `<PRIVILEGED>true</PRIVILEGED>`. This wraps execution blocks through **`lxqt-sudo`**, safely validating structural permissions through standard Linux session caches.
-
- 
+Once installed, restart the LXQt panel to register the new widget:
+```bash
+lxqt-panel --restart
+```
+Right-click your panel, choose **Configure Panel** / **Add Panel Widgets**, and add the AI Applet.
